@@ -165,7 +165,7 @@ class RVMParser
 
     private:
         bool readGroup(std::istream& is);
-        bool readPrimitive(std::istream& is);
+        bool readPrimitive(std::istream& is, bool useTransparency);
 
         void readMatrix(std::istream& is, std::array<float, 12>& matrix);
 

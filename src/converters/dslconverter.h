@@ -70,6 +70,8 @@ class DSLConverter : public RVMReader
         virtual void createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx);
 
         virtual void createFacetGroup(const std::array<float, 12>& matrix, const std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > >& vertexes);
+        
+        virtual void setTransparency(const unsigned int& transparency) {}
 
     private:
         void writeShapeTransforms(const std::string& shapeId, const std::array<float, 12>& matrix);

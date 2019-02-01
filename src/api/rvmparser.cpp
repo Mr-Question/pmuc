@@ -480,13 +480,19 @@ bool RVMParser::readStream(istream& is)
             if (!readGroup(is)) {
                 return false;
             }
-        } else if (id == "PRIM") {
-            if (!readPrimitive(is)) {
-                return false;
-            }
-        } else {
-            m_lastError = "Unknown or invalid identifier found.";
+        }
+        else if (id == "PRIM") {
+          if (!readPrimitive(is, false)) {
             return false;
+          }
+        }
+        else if (id == "OBST") {
+          if (!readPrimitive(is, true)) {
+            return false;
+          }
+        }
+        else {
+          m_lastError = "Unknown or invalid identifier found.";
         }
     }
 
@@ -559,13 +565,19 @@ bool RVMParser::readGroup(std::istream& is)
             if (!readGroup(is)) {
                 return false;
             }
-        } else if (id == "PRIM") {
-            if (!readPrimitive(is)) {
-                return false;
-            }
-        } else {
-            m_lastError = "Unknown or invalid identifier found.";
+        }
+        else if (id == "PRIM") {
+          if (!readPrimitive(is, false)) {
             return false;
+          }
+        }
+        else if (id == "OBST") {
+          if (!readPrimitive(is, true)) {
+            return false;
+          }
+        }
+        else {
+          m_lastError = "Unknown or invalid identifier found.";
         }
     }
 
@@ -579,7 +591,7 @@ bool RVMParser::readGroup(std::istream& is)
     return true;
 }
 
-bool RVMParser::readPrimitive(std::istream& is)
+bool RVMParser::readPrimitive(std::istream& is, bool useTransparency)
 {
     skip_<2>(is); // Garbage ?
     const unsigned int version = read_<unsigned int>(is);
@@ -591,7 +603,12 @@ bool RVMParser::readPrimitive(std::istream& is)
 
     // skip bounding box
     skip_<6>(is);
-
+    unsigned int aTransparency = 0;
+    if (useTransparency)
+    {
+      aTransparency = read_<unsigned int>(is);
+      aTransparency = _byteswap_ulong(aTransparency);
+    }
     Primitive   primitive;
     FacetGroup  fc;
     if (m_objectFound)
@@ -670,6 +687,11 @@ bool RVMParser::readPrimitive(std::istream& is)
                 m_lastError = "Unknown primitive.";
                 return false;
             }
+
+        }
+        if (useTransparency)
+        {
+          m_reader.setTransparency(aTransparency);
         }
     } else {
         switch (primitiveKind) {

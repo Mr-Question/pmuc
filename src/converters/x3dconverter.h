@@ -80,6 +80,8 @@ class X3DConverter : public RVMReader
 
         virtual void createFacetGroup(const std::array<float, 12>& matrix,
                                      const std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F> > > >& vertexes);
+                                     
+        virtual void setTransparency(const unsigned int& transparency) {}
 
     private:
         void startShape(const std::array<float, 12>& matrix);

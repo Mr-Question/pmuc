@@ -95,6 +95,8 @@ class IFCConverter : public RVMReader
         virtual void createLine(const std::array<float, 12>& matrix, const float& startx, const float& endx);
 
         virtual void createFacetGroup(const std::array<float, 12>& matrix,  const FGroup& vertexes);
+        
+        virtual void setTransparency(const unsigned int& transparency) {}
 
         static void messageCallBack(void* obj_ptr, shared_ptr<StatusCallback::Message> t);
 

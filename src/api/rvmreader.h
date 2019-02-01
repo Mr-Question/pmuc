@@ -210,6 +210,11 @@ class RVMReader
          */
         virtual void createFacetGroup(const std::array<float, 12>& matrix,
                                      const FGroup& vertexes) = 0;
+        /**
+        * @brief Sets transparency.
+        * @param transparency
+        */
+        virtual void setTransparency(const unsigned int& transparency) = 0;
 
         /**
          * @brief Sets the maximum size for a side of a primitive when tesselating.
