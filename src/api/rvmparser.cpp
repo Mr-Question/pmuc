@@ -532,8 +532,10 @@ bool RVMParser::readGroup(std::istream& is)
         m_nbGroups++;
         m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
         // Attributes
-        if (m_attributeStream && !m_attributeStream->eof()) {
+        if (m_attributeStream) {
             string p;
+            m_currentAttributeLine.clear();
+            m_attributeStream->seekg(0, 0); // Set position to start each time in supposition that attributes can be unordered.
             while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
                 std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
             }
