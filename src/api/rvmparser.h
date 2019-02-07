@@ -28,6 +28,8 @@
 #include <array>
 
 #include "vector3f.h"
+#include <unordered_map>
+#include <list>
 
 class RVMReader;
 
@@ -169,17 +171,21 @@ class RVMParser
 
         void readMatrix(std::istream& is, std::array<float, 12>& matrix);
 
+        /**
+        * @brief Creates unorded map
+        * @param is the input stream of attribute data.
+        */
+        void createMap(std::istream* theStream);
+
         RVMReader       &m_reader;
         std::string     m_encoding;
         std::string     m_lastError;
 
-        std::string     m_currentAttributeLine;
         std::string     m_objectName;
         int             m_objectFound;
         int             m_forcedColor;
         bool            m_aggregation;
         float           m_scale;
-        std::istream*   m_attributeStream;
 
         int             m_nbGroups;
         int             m_nbPyramids;
@@ -194,6 +200,10 @@ class RVMParser
         int             m_nbLines;
         int             m_nbFacetGroups;
         long            m_attributes;
+
+        typedef std::list<std::pair<std::string, std::string>> AttributesList;
+        typedef std::unordered_map<std::string, AttributesList> UnorderedMap;
+        UnorderedMap myMap;
 };
 
 #endif // RVMPARSER_H

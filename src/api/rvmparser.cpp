@@ -325,7 +325,6 @@ RVMParser::RVMParser(RVMReader& reader) :
     m_nbSpheres(0),
     m_nbLines(0),
     m_nbFacetGroups(0),
-    m_attributeStream(0),
     m_attributes(0),
     m_aggregation(false) {
 }
@@ -342,31 +341,62 @@ bool RVMParser::readFile(const string& filename, bool ignoreAttributes)
     }
 
     // Try to find ATT companion file
-    m_attributeStream = 0;
+    std::istream* attributeStream = 0;
     filebuf afb;
-    if (!ignoreAttributes) {
-        string attfilename = filename.substr(0, filename.find_last_of(".")) + ".att";
-        if (afb.open(attfilename.data(), ios::in)) {
-            cout << "Found attribute companion file: " << attfilename << endl;
-            m_attributeStream = new istream(&afb);
-        } else {
-            attfilename = filename.substr(0, filename.find_last_of(".")) + ".ATT";
-            if (afb.open(attfilename.data(), ios::in)) {
-                cout << "Found attribute companion file: " << attfilename << endl;
-                m_attributeStream = new istream(&afb);
-            }
-        }
-        if (m_attributeStream && !m_attributeStream->eof()) {
-            std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-        }
-    }
 
+    if (!ignoreAttributes) {
+      string attfilename = filename.substr(0, filename.find_last_of(".")) + ".att";
+      if (afb.open(attfilename.data(), ios::in)) {
+        cout << "Found attribute companion file: " << attfilename << endl;
+        attributeStream = new istream(&afb);
+      }
+      else {
+        attfilename = filename.substr(0, filename.find_last_of(".")) + ".ATT";
+        if (afb.open(attfilename.data(), ios::in)) {
+          cout << "Found attribute companion file: " << attfilename << endl;
+          attributeStream = new istream(&afb);
+        }
+      }
+      createMap(attributeStream);
+    }
 
     bool success = readStream(is);
 
     is.close();
 
     return success;
+}
+
+void RVMParser::createMap(std::istream* theStream)
+{
+  string p;
+  size_t j;
+  size_t i;
+  std::string currentAttributeLine;
+
+  while (theStream && !theStream->eof()) {
+
+    std::getline(*theStream, currentAttributeLine, '\n');
+    while ((j = currentAttributeLine.find("NEW ")) != string::npos && !theStream->eof()) {
+
+      string aKey = currentAttributeLine.substr(j + 4, string::npos);
+
+      AttributesList& aListPair = myMap.insert(
+        std::make_pair(aKey, AttributesList())).first->second;
+
+      std::getline(*theStream, currentAttributeLine, '\n');
+      p = trim(latin_to_utf8(currentAttributeLine));
+      while ((!theStream->eof()) && ((i = p.find(":=")) != string::npos)) {
+
+        auto an = p.substr(0, i);
+        auto av = trim(latin_to_utf8(p.substr(i + 2, string::npos)));
+        aListPair.push_back(make_pair(an, av));
+        m_attributes++; 
+        std::getline(*theStream, currentAttributeLine, '\n');
+        p = trim(latin_to_utf8(currentAttributeLine));
+      }
+    }
+  }
 }
 
 bool RVMParser::readFiles(const vector<string>& filenames, const string& name, bool ignoreAttributes)
@@ -529,35 +559,21 @@ bool RVMParser::readGroup(std::istream& is)
     }
     if (m_objectFound)
     {
-        m_nbGroups++;
-        m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
-        // Attributes
-        if (m_attributeStream) {
-            string p;
-            m_currentAttributeLine.clear();
-            m_attributeStream->seekg(0, 0); // Set position to start each time in supposition that attributes can be unordered.
-            while (((p = trim(m_currentAttributeLine)) != "NEW " + name) && (!m_attributeStream->eof())) {
-                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-            }
-            if (p == "NEW " + name ) {
-                m_reader.startMetaData();
-                size_t i;
-                std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-                p = trim(latin_to_utf8(m_currentAttributeLine));
-                while ((!m_attributeStream->eof()) && ((i = p.find(":=")) != string::npos)) {
-                     string an = p.substr(0, i);
-                     string av = p.substr(i+4, string::npos);
+      m_nbGroups++;
+      m_reader.startGroup(name, translation, m_forcedColor != -1 ? m_forcedColor : materialId);
 
-                     m_reader.startMetaDataPair(an, av);
-                     m_reader.endMetaDataPair();
-                     m_attributes++;
-
-                     std::getline(*m_attributeStream, m_currentAttributeLine, '\n');
-                     p = trim(latin_to_utf8(m_currentAttributeLine));
-                }
-                m_reader.endMetaData();
-            }
+      UnorderedMap::const_iterator aFound = myMap.find(name);
+      if (aFound != myMap.end())
+      {
+        m_reader.startMetaData();
+        const AttributesList& anAtt = aFound->second;
+        for (auto iter = anAtt.begin(); iter != anAtt.end(); iter++)
+        {
+          m_reader.startMetaDataPair(iter->first, iter->second);
+          m_reader.endMetaDataPair();
         }
+        m_reader.endMetaData();
+      }
     }
 
     // Children
