@@ -504,7 +504,7 @@ bool RVMParser::readStream(istream& is)
     if (!m_aggregation)
         m_reader.startModel(projectName, name);
 
-    while ((read_(is, id)) != "END")
+    while ((read_(is, id)) != "END" && !id.empty())
     {
         if (id == "CNTB") {
             if (!readGroup(is)) {
@@ -516,7 +516,7 @@ bool RVMParser::readStream(istream& is)
             return false;
           }
         }
-        else if (id == "OBST") {
+        else if ((id == "OBST") || (id == "INSU")) {
           if (!readPrimitive(is, true)) {
             return false;
           }
@@ -578,7 +578,7 @@ bool RVMParser::readGroup(std::istream& is)
 
     // Children
     Identifier id;
-    while ((read_(is, id)) != "CNTE") {
+    while ((read_(is, id)) != "CNTE" && !id.empty()) {
         if (id == "CNTB") {
             if (!readGroup(is)) {
                 return false;
@@ -589,7 +589,7 @@ bool RVMParser::readGroup(std::istream& is)
             return false;
           }
         }
-        else if (id == "OBST") {
+        else if ((id == "OBST") || (id == "INSU")) {
           if (!readPrimitive(is, true)) {
             return false;
           }
