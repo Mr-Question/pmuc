@@ -40,7 +40,10 @@ using namespace std;
 #define PATHSEP '/'
 #endif
 
-typedef std::vector<std::vector<std::vector<std::pair<Vector3F, Vector3F>>>>        FacetGroup;
+typedef std::pair<Vector3F, Vector3F> PointNormal;
+typedef std::vector<PointNormal>      Contour;
+typedef std::vector<Contour>          Facet;
+typedef std::vector<Facet>            FacetGroup;
 
 union Primitive
 {
@@ -206,14 +209,17 @@ static FacetGroup& readFacetGroup_(std::istream& is, FacetGroup& res)
     res.clear();
     res.resize(read_<unsigned int>(is));
 
-    for (auto& p : res)
+    for (size_t i = 0; i < res.size(); ++i)
     {
+        Facet& p = res[i];
         p.resize(read_<unsigned int>(is));
-        for (auto& g : p)
+        for (size_t j = 0; j < p.size (); ++j)
         {
+            Contour& g = p[j];
             g.resize(read_<unsigned int>(is));
-            for (auto& v : g)
+            for (size_t k = 0; k < g.size(); ++k)
             {
+                PointNormal& v = g[k];
                 float x = read_<float>(is);
                 float y = read_<float>(is);
                 float z = read_<float>(is);
@@ -285,7 +291,8 @@ namespace {
 
     static string latin_to_utf8(const string& latin) {
         string result;
-        for(uint8_t c: latin) {
+        for (size_t i = 0; i < latin.size (); ++i) {
+            const uint8_t& c = latin[i];
             if(c < 0x80) {
                 result += c;
             } else {
@@ -767,6 +774,6 @@ bool RVMParser::readPrimitive(std::istream& is, bool useTransparency)
 
 void RVMParser::readMatrix(istream& is, std::array<float, 12>& matrix)
 {
-    for (auto &value : matrix)
-        value = read_<float>(is);
+    for (size_t i = 0; i < matrix.size(); ++i)
+        matrix[i] = read_<float>(is);
 }
