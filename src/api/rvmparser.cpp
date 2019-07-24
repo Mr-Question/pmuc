@@ -559,6 +559,11 @@ bool RVMParser::readGroup(std::istream& is)
     readArray_(is, translation.m_values);
     translation *= 0.001f;
 
+    if (version >= 3)
+    {
+      skip_<1>(is);
+    }
+
     const unsigned int materialId = read_<unsigned int>(is);
 
     if (m_objectName.empty() || m_objectFound || name == m_objectName) {
